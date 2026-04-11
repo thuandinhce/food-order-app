@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -9,6 +10,8 @@ type MenuItem = {
   price: number;
   description: string | null;
   available: boolean;
+  image_url: string | null;
+  image_path: string | null;
 };
 
 type CartItem = MenuItem & {
@@ -207,11 +210,11 @@ export default function HomePage() {
                 Đặt món nhanh - ăn là ghiền 😋
               </p>
               <h1 className="text-2xl font-bold tracking-tight">
-                Ăn vặt TINTUNE
+                Ăn vặt Tintune
               </h1>
             </div>
             <a
-              href="https://zalo.me/0915025463"
+              href="https://zalo.me/0900000000"
               target="_blank"
               rel="noreferrer"
               className="rounded-2xl border border-neutral-200 px-4 py-2 text-sm font-medium shadow-sm"
@@ -241,57 +244,71 @@ export default function HomePage() {
               return (
                 <article
                   key={item.id}
-                  className="rounded-3xl border border-neutral-200 bg-white p-4 shadow-sm"
+                  className="overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm"
                 >
-                  <h2 className="text-lg font-semibold">{item.name}</h2>
-
-                  {item.description && (
-                    <p className="mt-1 text-sm text-neutral-500">
-                      {item.description}
-                    </p>
+                  {item.image_url && (
+                    <div className="relative h-48 w-full">
+                      <Image
+                        src={item.image_url}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
                   )}
 
-                  <div className="mt-4 flex items-center justify-between">
-                    <p className="text-base font-bold">
-                      {item.price.toLocaleString('vi-VN')}đ
-                    </p>
+                  <div className="p-4">
+                    <h2 className="text-lg font-semibold">{item.name}</h2>
 
-                    {!cartItem ? (
-                      <button
-                        onClick={() => addToCart(item)}
-                        className="rounded-2xl bg-neutral-900 px-4 py-3 text-sm font-semibold text-white"
-                      >
-                        Thêm món
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => decreaseFromCart(item.id)}
-                          className="h-9 w-9 rounded-xl bg-neutral-100 text-lg font-bold"
-                        >
-                          -
-                        </button>
+                    {item.description && (
+                      <p className="mt-1 text-sm text-neutral-500">
+                        {item.description}
+                      </p>
+                    )}
 
-                        <span>{cartItem.quantity}</span>
+                    <div className="mt-4 flex items-center justify-between">
+                      <p className="text-base font-bold">
+                        {item.price.toLocaleString('vi-VN')}đ
+                      </p>
 
+                      {!cartItem ? (
                         <button
                           onClick={() => addToCart(item)}
-                          className="h-9 w-9 rounded-xl bg-neutral-900 text-lg font-bold text-white"
+                          className="rounded-2xl bg-neutral-900 px-4 py-3 text-sm font-semibold text-white"
                         >
-                          +
+                          Thêm món
                         </button>
-                      </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => decreaseFromCart(item.id)}
+                            className="h-9 w-9 rounded-xl bg-neutral-100 text-lg font-bold"
+                          >
+                            -
+                          </button>
+
+                          <span>{cartItem.quantity}</span>
+
+                          <button
+                            onClick={() => addToCart(item)}
+                            className="h-9 w-9 rounded-xl bg-neutral-900 text-lg font-bold text-white"
+                          >
+                            +
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {cartItem && (
+                      <textarea
+                        value={cartItem.note}
+                        onChange={(e) => updateItemNote(item.id, e.target.value)}
+                        placeholder="Ghi chú riêng cho món này..."
+                        className="mt-3 w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm"
+                      />
                     )}
                   </div>
-
-                  {cartItem && (
-                    <textarea
-                      value={cartItem.note}
-                      onChange={(e) => updateItemNote(item.id, e.target.value)}
-                      placeholder="Ghi chú riêng cho món này..."
-                      className="mt-3 w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm"
-                    />
-                  )}
                 </article>
               );
             })}

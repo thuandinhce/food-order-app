@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 
@@ -29,9 +30,11 @@ type MenuItem = {
   description: string | null;
   available: boolean;
   created_at: string;
+  image_url: string | null;
+  image_path: string | null;
 };
 
-const ADMIN_PASSWORD = '090819';
+const ADMIN_PASSWORD = '123456';
 
 export default function AdminPage() {
   const [authorized, setAuthorized] = useState(false);
@@ -43,6 +46,13 @@ export default function AdminPage() {
   const [newName, setNewName] = useState('');
   const [newPrice, setNewPrice] = useState('');
   const [newDescription, setNewDescription] = useState('');
+  const [newImageFile, setNewImageFile] = useState<File | null>(null);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editImageFile, setEditImageFile] = useState<File | null>(null);
 
   useEffect(() => {
     const password = window.prompt('Nhập mật khẩu admin:');
@@ -92,6 +102,45 @@ export default function AdminPage() {
     }
   };
 
+  const uploadMenuImage = async (file: File) => {
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    const fileName = `${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}.${fileExt}`;
+    const filePath = `menu/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('menu-images')
+      .upload(filePath, file, {
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw new Error(uploadError.message);
+    }
+
+    const { data } = supabase.storage
+      .from('menu-images')
+      .getPublicUrl(filePath);
+
+    return {
+      imageUrl: data.publicUrl,
+      imagePath: filePath,
+    };
+  };
+
+  const removeMenuImageByPath = async (imagePath: string | null) => {
+    if (!imagePath) return;
+
+    const { error } = await supabase.storage
+      .from('menu-images')
+      .remove([imagePath]);
+
+    if (error) {
+      console.error('Delete storage image error:', error.message);
+    }
+  };
+
   const addMenuItem = async () => {
     const priceNumber = Number(newPrice);
 
@@ -105,24 +154,112 @@ export default function AdminPage() {
       return;
     }
 
-    const { error } = await supabase.from('menu_items').insert([
-      {
-        name: newName.trim(),
-        price: priceNumber,
-        description: newDescription.trim() || null,
-        available: true,
-      },
-    ]);
+    try {
+      let imageUrl: string | null = null;
+      let imagePath: string | null = null;
 
-    if (error) {
-      alert(`Lỗi thêm món: ${error.message}`);
+      if (newImageFile) {
+        const uploadResult = await uploadMenuImage(newImageFile);
+        imageUrl = uploadResult.imageUrl;
+        imagePath = uploadResult.imagePath;
+      }
+
+      const { error } = await supabase.from('menu_items').insert([
+        {
+          name: newName.trim(),
+          price: priceNumber,
+          description: newDescription.trim() || null,
+          available: true,
+          image_url: imageUrl,
+          image_path: imagePath,
+        },
+      ]);
+
+      if (error) {
+        alert(`Lỗi thêm món: ${error.message}`);
+        return;
+      }
+
+      setNewName('');
+      setNewPrice('');
+      setNewDescription('');
+      setNewImageFile(null);
+      fetchAll();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Upload ảnh thất bại.';
+      alert(`Lỗi upload ảnh: ${message}`);
+    }
+  };
+
+  const startEditMenuItem = (item: MenuItem) => {
+    setEditingId(item.id);
+    setEditName(item.name);
+    setEditPrice(String(item.price));
+    setEditDescription(item.description || '');
+    setEditImageFile(null);
+  };
+
+  const cancelEditMenuItem = () => {
+    setEditingId(null);
+    setEditName('');
+    setEditPrice('');
+    setEditDescription('');
+    setEditImageFile(null);
+  };
+
+  const saveEditMenuItem = async (currentItem: MenuItem) => {
+    if (!editingId) return;
+
+    const priceNumber = Number(editPrice);
+
+    if (!editName.trim()) {
+      alert('Vui lòng nhập tên món');
       return;
     }
 
-    setNewName('');
-    setNewPrice('');
-    setNewDescription('');
-    fetchAll();
+    if (!priceNumber || priceNumber <= 0) {
+      alert('Vui lòng nhập giá hợp lệ');
+      return;
+    }
+
+    try {
+      let imageUrl = currentItem.image_url;
+      let imagePath = currentItem.image_path;
+
+      if (editImageFile) {
+        const uploadResult = await uploadMenuImage(editImageFile);
+        imageUrl = uploadResult.imageUrl;
+        imagePath = uploadResult.imagePath;
+      }
+
+      const { error } = await supabase
+        .from('menu_items')
+        .update({
+          name: editName.trim(),
+          price: priceNumber,
+          description: editDescription.trim() || null,
+          image_url: imageUrl,
+          image_path: imagePath,
+        })
+        .eq('id', editingId);
+
+      if (error) {
+        alert(`Lỗi sửa món: ${error.message}`);
+        return;
+      }
+
+      if (editImageFile && currentItem.image_path) {
+        await removeMenuImageByPath(currentItem.image_path);
+      }
+
+      cancelEditMenuItem();
+      fetchAll();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Upload ảnh thất bại.';
+      alert(`Lỗi upload ảnh: ${message}`);
+    }
   };
 
   const toggleAvailable = async (item: MenuItem) => {
@@ -139,15 +276,26 @@ export default function AdminPage() {
     fetchAll();
   };
 
-  const deleteMenuItem = async (id: string) => {
+  const deleteMenuItem = async (item: MenuItem) => {
     const confirmed = window.confirm('Bạn có chắc muốn xóa món này?');
     if (!confirmed) return;
 
-    const { error } = await supabase.from('menu_items').delete().eq('id', id);
+    const { error } = await supabase
+      .from('menu_items')
+      .delete()
+      .eq('id', item.id);
 
     if (error) {
       alert(`Lỗi xóa món: ${error.message}`);
       return;
+    }
+
+    if (item.image_path) {
+      await removeMenuImageByPath(item.image_path);
+    }
+
+    if (editingId === item.id) {
+      cancelEditMenuItem();
     }
 
     fetchAll();
@@ -201,7 +349,7 @@ export default function AdminPage() {
     <main className="min-h-screen bg-neutral-100 p-4 text-neutral-900">
       <div className="mx-auto w-full max-w-md space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">Admin - TINTUNE</h1>
+          <h1 className="text-xl font-bold">Admin - Tintune</h1>
           <button
             onClick={fetchAll}
             className="rounded-2xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
@@ -243,6 +391,16 @@ export default function AdminPage() {
               className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm outline-none"
             />
 
+            <div>
+              <label className="mb-2 block text-sm font-medium">Ảnh món</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setNewImageFile(e.target.files?.[0] || null)}
+                className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm"
+              />
+            </div>
+
             <button
               onClick={addMenuItem}
               className="w-full rounded-2xl bg-neutral-900 px-4 py-3 text-sm font-semibold text-white"
@@ -260,52 +418,146 @@ export default function AdminPage() {
               <div className="text-sm text-neutral-500">Chưa có món nào.</div>
             )}
 
-            {menuItems.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-2xl border border-neutral-200 p-3"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="font-semibold">{item.name}</div>
-                    <div className="text-sm text-neutral-500">
-                      {item.price.toLocaleString('vi-VN')}đ
-                    </div>
-                    {item.description && (
-                      <div className="mt-1 text-sm text-neutral-500">
-                        {item.description}
+            {menuItems.map((item) => {
+              const isEditing = editingId === item.id;
+
+              return (
+                <div
+                  key={item.id}
+                  className="rounded-2xl border border-neutral-200 p-3"
+                >
+                  {isEditing ? (
+                    <div className="space-y-3">
+                      <input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        placeholder="Tên món"
+                        className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm outline-none"
+                      />
+
+                      <input
+                        value={editPrice}
+                        onChange={(e) => setEditPrice(e.target.value)}
+                        placeholder="Giá"
+                        inputMode="numeric"
+                        className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm outline-none"
+                      />
+
+                      <textarea
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        placeholder="Mô tả món"
+                        rows={3}
+                        className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm outline-none"
+                      />
+
+                      {item.image_url && (
+                        <div className="relative h-40 w-full overflow-hidden rounded-2xl">
+                          <Image
+                            src={item.image_url}
+                            alt={item.name}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="mb-2 block text-sm font-medium">
+                          Đổi ảnh món
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) =>
+                            setEditImageFile(e.target.files?.[0] || null)
+                          }
+                          className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm"
+                        />
                       </div>
-                    )}
-                    <div className="mt-1 text-xs">
-                      Trạng thái:{' '}
-                      <span
-                        className={
-                          item.available ? 'text-green-600' : 'text-red-500'
-                        }
-                      >
-                        {item.available ? 'Đang bán' : 'Đang ẩn'}
-                      </span>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => saveEditMenuItem(item)}
+                          className="rounded-2xl bg-green-600 px-3 py-2 text-xs font-medium text-white"
+                        >
+                          Lưu
+                        </button>
+
+                        <button
+                          onClick={cancelEditMenuItem}
+                          className="rounded-2xl bg-neutral-300 px-3 py-2 text-xs font-medium text-neutral-900"
+                        >
+                          Hủy
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  ) : (
+                    <>
+                      {item.image_url && (
+                        <div className="relative mb-3 h-40 w-full overflow-hidden rounded-2xl">
+                          <Image
+                            src={item.image_url}
+                            alt={item.name}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      )}
 
-                <div className="mt-3 flex gap-2">
-                  <button
-                    onClick={() => toggleAvailable(item)}
-                    className="rounded-2xl bg-neutral-900 px-3 py-2 text-xs font-medium text-white"
-                  >
-                    {item.available ? 'Ẩn món' : 'Hiện món'}
-                  </button>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="font-semibold">{item.name}</div>
+                          <div className="text-sm text-neutral-500">
+                            {item.price.toLocaleString('vi-VN')}đ
+                          </div>
+                          {item.description && (
+                            <div className="mt-1 text-sm text-neutral-500">
+                              {item.description}
+                            </div>
+                          )}
+                          <div className="mt-1 text-xs">
+                            Trạng thái:{' '}
+                            <span
+                              className={
+                                item.available ? 'text-green-600' : 'text-red-500'
+                              }
+                            >
+                              {item.available ? 'Đang bán' : 'Đang ẩn'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
-                  <button
-                    onClick={() => deleteMenuItem(item.id)}
-                    className="rounded-2xl bg-red-500 px-3 py-2 text-xs font-medium text-white"
-                  >
-                    Xóa món
-                  </button>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          onClick={() => startEditMenuItem(item)}
+                          className="rounded-2xl bg-blue-600 px-3 py-2 text-xs font-medium text-white"
+                        >
+                          Sửa món
+                        </button>
+
+                        <button
+                          onClick={() => toggleAvailable(item)}
+                          className="rounded-2xl bg-neutral-900 px-3 py-2 text-xs font-medium text-white"
+                        >
+                          {item.available ? 'Ẩn món' : 'Hiện món'}
+                        </button>
+
+                        <button
+                          onClick={() => deleteMenuItem(item)}
+                          className="rounded-2xl bg-red-500 px-3 py-2 text-xs font-medium text-white"
+                        >
+                          Xóa món
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
