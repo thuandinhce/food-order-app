@@ -16,6 +16,25 @@ type CartItem = MenuItem & {
   note: string;
 };
 
+type OrderItem = {
+  id?: string;
+  name?: string;
+  price?: number;
+  quantity?: number;
+  note?: string;
+};
+
+type Order = {
+  id: string;
+  phone: string;
+  note: string | null;
+  items: OrderItem[] | null;
+  total_items: number;
+  total_price: number;
+  created_at: string;
+  status: string;
+};
+
 export default function HomePage() {
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -23,6 +42,11 @@ export default function HomePage() {
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingMenu, setLoadingMenu] = useState(true);
+
+  const [lookupPhone, setLookupPhone] = useState('');
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupOrders, setLookupOrders] = useState<Order[]>([]);
+  const [lookupMessage, setLookupMessage] = useState('');
 
   const fetchMenu = async () => {
     try {
@@ -94,6 +118,7 @@ export default function HomePage() {
   );
 
   const isValidPhone = /^0\d{9,10}$/.test(phone);
+  const isValidLookupPhone = /^0\d{9,10}$/.test(lookupPhone);
   const canOrder = isValidPhone && cart.length > 0 && !isSubmitting;
 
   const handleOrder = async () => {
@@ -131,6 +156,47 @@ export default function HomePage() {
     }
   };
 
+  const handleLookupOrders = async () => {
+    if (!isValidLookupPhone) {
+      setLookupMessage('Vui lòng nhập số điện thoại hợp lệ.');
+      setLookupOrders([]);
+      return;
+    }
+
+    try {
+      setLookupLoading(true);
+      setLookupMessage('');
+
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('phone', lookupPhone)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        setLookupMessage(`Lỗi tra cứu đơn: ${error.message}`);
+        setLookupOrders([]);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        setLookupMessage('Không tìm thấy đơn hàng nào với số điện thoại này.');
+        setLookupOrders([]);
+        return;
+      }
+
+      setLookupOrders(data);
+      setLookupMessage(`Tìm thấy ${data.length} đơn hàng.`);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Có lỗi không xác định xảy ra.';
+      setLookupMessage(`Có lỗi xảy ra: ${message}`);
+      setLookupOrders([]);
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-neutral-100 text-neutral-900">
       <div className="mx-auto min-h-screen w-full max-w-md bg-white shadow-sm">
@@ -145,7 +211,7 @@ export default function HomePage() {
               </h1>
             </div>
             <a
-              href="https://zalo.me/0900000000"
+              href="https://zalo.me/0915025463"
               target="_blank"
               rel="noreferrer"
               className="rounded-2xl border border-neutral-200 px-4 py-2 text-sm font-medium shadow-sm"
@@ -231,8 +297,10 @@ export default function HomePage() {
             })}
         </section>
 
-        <section className="px-4 pb-40">
+        <section className="px-4 pb-6">
           <div className="space-y-3 rounded-3xl border border-neutral-200 bg-neutral-50 p-4">
+            <h2 className="text-lg font-semibold">Thông tin đặt hàng</h2>
+
             <div>
               <label className="text-sm font-medium">Số điện thoại</label>
               <input
@@ -258,6 +326,90 @@ export default function HomePage() {
                 rows={4}
               />
             </div>
+          </div>
+        </section>
+
+        <section className="px-4 pb-40">
+          <div className="rounded-3xl border border-neutral-200 bg-white p-4 shadow-sm">
+            <h2 className="text-lg font-semibold">Tra cứu đơn hàng</h2>
+            <p className="mt-1 text-sm text-neutral-500">
+              Nhập số điện thoại đã đặt để kiểm tra trạng thái đơn.
+            </p>
+
+            <div className="mt-4 space-y-3">
+              <input
+                value={lookupPhone}
+                onChange={(e) => setLookupPhone(e.target.value)}
+                placeholder="Nhập số điện thoại đã đặt"
+                className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm outline-none"
+              />
+
+              <button
+                onClick={handleLookupOrders}
+                disabled={lookupLoading}
+                className="w-full rounded-2xl bg-neutral-900 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {lookupLoading ? 'Đang tra cứu...' : 'Tra cứu đơn'}
+              </button>
+
+              {lookupMessage && (
+                <div className="rounded-2xl bg-neutral-100 px-4 py-3 text-sm text-neutral-700">
+                  {lookupMessage}
+                </div>
+              )}
+            </div>
+
+            {lookupOrders.length > 0 && (
+              <div className="mt-4 space-y-4">
+                {lookupOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4"
+                  >
+                    <div className="text-sm text-neutral-500">
+                      {new Date(order.created_at).toLocaleString('vi-VN')}
+                    </div>
+
+                    <div className="mt-2 text-sm">
+                      Trạng thái:{' '}
+                      <span
+                        className={
+                          order.status === 'done'
+                            ? 'font-medium text-green-600'
+                            : 'font-medium text-orange-500'
+                        }
+                      >
+                        {order.status === 'done' ? 'Hoàn thành' : 'Đang chờ'}
+                      </span>
+                    </div>
+
+                    {!!order.note && (
+                      <div className="mt-2 text-sm text-neutral-600">
+                        Ghi chú chung: {order.note}
+                      </div>
+                    )}
+
+                    <div className="mt-3 space-y-1">
+                      {(order.items || []).map((item, idx) => (
+                        <div key={idx} className="text-sm">
+                          • {item.name || 'Món không tên'} x{item.quantity || 0}
+                          {!!item.note && (
+                            <span className="text-neutral-500">
+                              {' '}
+                              ({item.note})
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 text-right font-bold">
+                      {order.total_price.toLocaleString('vi-VN')}đ
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

@@ -201,7 +201,7 @@ export default function AdminPage() {
     <main className="min-h-screen bg-neutral-100 p-4 text-neutral-900">
       <div className="mx-auto w-full max-w-md space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">Admin - Tintune</h1>
+          <h1 className="text-xl font-bold">Admin - TINTUNE</h1>
           <button
             onClick={fetchAll}
             className="rounded-2xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
