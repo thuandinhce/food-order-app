@@ -34,7 +34,7 @@ type MenuItem = {
   image_path: string | null;
 };
 
-const ADMIN_PASSWORD = '123456';
+const ADMIN_PASSWORD = '090819';
 
 export default function AdminPage() {
   const [authorized, setAuthorized] = useState(false);
@@ -55,7 +55,7 @@ export default function AdminPage() {
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
 
   useEffect(() => {
-    const password = window.prompt('Nhập mật khẩu admin:');
+    const password = window.prompt('Nhập mật khẩu admin');
 
     if (password === ADMIN_PASSWORD) {
       setAuthorized(true);
@@ -87,13 +87,13 @@ export default function AdminPage() {
       ]);
 
       if (ordersRes.error) {
-        alert(`Lỗi load đơn hàng: ${ordersRes.error.message}`);
+        alert(`Lỗi tải đơn hàng: ${ordersRes.error.message}`);
       } else {
         setOrders(ordersRes.data || []);
       }
 
       if (menuRes.error) {
-        alert(`Lỗi load menu: ${menuRes.error.message}`);
+        alert(`Lỗi tải menu: ${menuRes.error.message}`);
       } else {
         setMenuItems(menuRes.data || []);
       }
@@ -187,8 +187,8 @@ export default function AdminPage() {
       fetchAll();
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Upload ảnh thất bại.';
-      alert(`Lỗi upload ảnh: ${message}`);
+        err instanceof Error ? err.message : 'Tải ảnh lên thất bại.';
+      alert(`Lỗi tải ảnh: ${message}`);
     }
   };
 
@@ -257,8 +257,8 @@ export default function AdminPage() {
       fetchAll();
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Upload ảnh thất bại.';
-      alert(`Lỗi upload ảnh: ${message}`);
+        err instanceof Error ? err.message : 'Tải ảnh lên thất bại.';
+      alert(`Lỗi tải ảnh: ${message}`);
     }
   };
 
@@ -346,33 +346,39 @@ export default function AdminPage() {
   if (!authorized) return null;
 
   return (
-    <main className="min-h-screen bg-neutral-100 p-4 text-neutral-900">
+    <main className="min-h-screen bg-gradient-to-b from-emerald-50 via-teal-50 to-cyan-50 p-4 text-slate-700">
       <div className="mx-auto w-full max-w-md space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">Admin - Tintune</h1>
+        <div className="flex items-center justify-between rounded-3xl border border-emerald-100 bg-white/90 p-4 shadow-sm">
+          <div>
+            <h1 className="text-xl font-bold text-slate-700">Quản trị TINTUNE</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Quản lý menu và đơn hàng
+            </p>
+          </div>
+
           <button
             onClick={fetchAll}
-            className="rounded-2xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+            className="rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-sm font-medium text-white shadow-sm"
           >
             Tải lại
           </button>
         </div>
 
         {loading && (
-          <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+          <div className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm">
             Đang tải dữ liệu...
           </div>
         )}
 
-        <section className="rounded-3xl border border-neutral-200 bg-white p-4 shadow-sm">
-          <h2 className="text-lg font-semibold">Thêm món mới</h2>
+        <section className="rounded-[28px] border border-emerald-100 bg-white p-4 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-700">Thêm món mới</h2>
 
           <div className="mt-4 space-y-3">
             <input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Tên món"
-              className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm outline-none"
+              className="w-full rounded-2xl border border-emerald-100 bg-emerald-50/40 px-4 py-3 text-sm text-slate-600 outline-none"
             />
 
             <input
@@ -380,7 +386,7 @@ export default function AdminPage() {
               onChange={(e) => setNewPrice(e.target.value)}
               placeholder="Giá"
               inputMode="numeric"
-              className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm outline-none"
+              className="w-full rounded-2xl border border-emerald-100 bg-emerald-50/40 px-4 py-3 text-sm text-slate-600 outline-none"
             />
 
             <textarea
@@ -388,34 +394,36 @@ export default function AdminPage() {
               onChange={(e) => setNewDescription(e.target.value)}
               placeholder="Mô tả món"
               rows={3}
-              className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm outline-none"
+              className="w-full rounded-2xl border border-emerald-100 bg-emerald-50/40 px-4 py-3 text-sm text-slate-600 outline-none"
             />
 
             <div>
-              <label className="mb-2 block text-sm font-medium">Ảnh món</label>
+              <label className="mb-2 block text-sm font-semibold text-slate-600">
+                Ảnh món
+              </label>
               <input
                 type="file"
                 accept="image/*"
                 onChange={(e) => setNewImageFile(e.target.files?.[0] || null)}
-                className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm"
+                className="w-full rounded-2xl border border-emerald-100 bg-emerald-50/40 px-4 py-3 text-sm text-slate-600"
               />
             </div>
 
             <button
               onClick={addMenuItem}
-              className="w-full rounded-2xl bg-neutral-900 px-4 py-3 text-sm font-semibold text-white"
+              className="w-full rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3 text-sm font-semibold text-white shadow-sm"
             >
               Thêm món
             </button>
           </div>
         </section>
 
-        <section className="rounded-3xl border border-neutral-200 bg-white p-4 shadow-sm">
-          <h2 className="text-lg font-semibold">Quản lý menu</h2>
+        <section className="rounded-[28px] border border-emerald-100 bg-white p-4 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-700">Quản lý menu</h2>
 
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 space-y-4">
             {menuItems.length === 0 && (
-              <div className="text-sm text-neutral-500">Chưa có món nào.</div>
+              <div className="text-sm text-slate-500">Chưa có món nào.</div>
             )}
 
             {menuItems.map((item) => {
@@ -424,7 +432,7 @@ export default function AdminPage() {
               return (
                 <div
                   key={item.id}
-                  className="rounded-2xl border border-neutral-200 p-3"
+                  className="rounded-3xl border border-emerald-100 bg-emerald-50/30 p-3"
                 >
                   {isEditing ? (
                     <div className="space-y-3">
@@ -432,7 +440,7 @@ export default function AdminPage() {
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
                         placeholder="Tên món"
-                        className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm outline-none"
+                        className="w-full rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm text-slate-600 outline-none"
                       />
 
                       <input
@@ -440,7 +448,7 @@ export default function AdminPage() {
                         onChange={(e) => setEditPrice(e.target.value)}
                         placeholder="Giá"
                         inputMode="numeric"
-                        className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm outline-none"
+                        className="w-full rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm text-slate-600 outline-none"
                       />
 
                       <textarea
@@ -448,11 +456,11 @@ export default function AdminPage() {
                         onChange={(e) => setEditDescription(e.target.value)}
                         placeholder="Mô tả món"
                         rows={3}
-                        className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm outline-none"
+                        className="w-full rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm text-slate-600 outline-none"
                       />
 
                       {item.image_url && (
-                        <div className="relative h-40 w-full overflow-hidden rounded-2xl">
+                        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl">
                           <Image
                             src={item.image_url}
                             alt={item.name}
@@ -464,7 +472,7 @@ export default function AdminPage() {
                       )}
 
                       <div>
-                        <label className="mb-2 block text-sm font-medium">
+                        <label className="mb-2 block text-sm font-semibold text-slate-600">
                           Đổi ảnh món
                         </label>
                         <input
@@ -473,21 +481,21 @@ export default function AdminPage() {
                           onChange={(e) =>
                             setEditImageFile(e.target.files?.[0] || null)
                           }
-                          className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm"
+                          className="w-full rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm text-slate-600"
                         />
                       </div>
 
                       <div className="flex gap-2">
                         <button
                           onClick={() => saveEditMenuItem(item)}
-                          className="rounded-2xl bg-green-600 px-3 py-2 text-xs font-medium text-white"
+                          className="rounded-2xl bg-emerald-500 px-3 py-2 text-xs font-medium text-white"
                         >
                           Lưu
                         </button>
 
                         <button
                           onClick={cancelEditMenuItem}
-                          className="rounded-2xl bg-neutral-300 px-3 py-2 text-xs font-medium text-neutral-900"
+                          className="rounded-2xl bg-slate-200 px-3 py-2 text-xs font-medium text-slate-600"
                         >
                           Hủy
                         </button>
@@ -495,8 +503,8 @@ export default function AdminPage() {
                     </div>
                   ) : (
                     <>
-                      {item.image_url && (
-                        <div className="relative mb-3 h-40 w-full overflow-hidden rounded-2xl">
+                      {item.image_url ? (
+                        <div className="relative mb-3 aspect-[4/3] w-full overflow-hidden rounded-2xl">
                           <Image
                             src={item.image_url}
                             alt={item.name}
@@ -505,50 +513,56 @@ export default function AdminPage() {
                             unoptimized
                           />
                         </div>
+                      ) : (
+                        <div className="mb-3 flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 via-teal-100 to-cyan-100">
+                          <span className="text-sm font-medium text-emerald-700">
+                            Chưa có ảnh món
+                          </span>
+                        </div>
                       )}
 
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="font-semibold">{item.name}</div>
-                          <div className="text-sm text-neutral-500">
-                            {item.price.toLocaleString('vi-VN')}đ
+                      <div>
+                        <div className="font-bold text-slate-700">{item.name}</div>
+                        <div className="text-sm font-semibold text-emerald-700">
+                          {item.price.toLocaleString('vi-VN')}đ
+                        </div>
+                        {item.description && (
+                          <div className="mt-1 text-sm text-slate-500">
+                            {item.description}
                           </div>
-                          {item.description && (
-                            <div className="mt-1 text-sm text-neutral-500">
-                              {item.description}
-                            </div>
-                          )}
-                          <div className="mt-1 text-xs">
-                            Trạng thái:{' '}
-                            <span
-                              className={
-                                item.available ? 'text-green-600' : 'text-red-500'
-                              }
-                            >
-                              {item.available ? 'Đang bán' : 'Đang ẩn'}
-                            </span>
-                          </div>
+                        )}
+                        <div className="mt-2 text-xs text-slate-500">
+                          Trạng thái:{' '}
+                          <span
+                            className={
+                              item.available
+                                ? 'font-semibold text-emerald-600'
+                                : 'font-semibold text-red-500'
+                            }
+                          >
+                            {item.available ? 'Đang bán' : 'Đang ẩn'}
+                          </span>
                         </div>
                       </div>
 
                       <div className="mt-3 flex flex-wrap gap-2">
                         <button
                           onClick={() => startEditMenuItem(item)}
-                          className="rounded-2xl bg-blue-600 px-3 py-2 text-xs font-medium text-white"
+                          className="rounded-2xl bg-cyan-500 px-3 py-2 text-xs font-medium text-white"
                         >
                           Sửa món
                         </button>
 
                         <button
                           onClick={() => toggleAvailable(item)}
-                          className="rounded-2xl bg-neutral-900 px-3 py-2 text-xs font-medium text-white"
+                          className="rounded-2xl bg-emerald-500 px-3 py-2 text-xs font-medium text-white"
                         >
                           {item.available ? 'Ẩn món' : 'Hiện món'}
                         </button>
 
                         <button
                           onClick={() => deleteMenuItem(item)}
-                          className="rounded-2xl bg-red-500 px-3 py-2 text-xs font-medium text-white"
+                          className="rounded-2xl bg-rose-500 px-3 py-2 text-xs font-medium text-white"
                         >
                           Xóa món
                         </button>
@@ -561,32 +575,34 @@ export default function AdminPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-neutral-200 bg-white p-4 shadow-sm">
-          <h2 className="text-lg font-semibold">Quản lý đơn hàng</h2>
+        <section className="rounded-[28px] border border-emerald-100 bg-white p-4 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-700">Quản lý đơn hàng</h2>
 
           <div className="mt-4 space-y-4">
             {orders.length === 0 && (
-              <div className="text-sm text-neutral-500">Chưa có đơn hàng.</div>
+              <div className="text-sm text-slate-500">Chưa có đơn hàng.</div>
             )}
 
             {orders.map((order) => (
               <div
                 key={order.id}
-                className="rounded-2xl border border-neutral-200 p-4"
+                className="rounded-3xl border border-emerald-100 bg-emerald-50/30 p-4"
               >
-                <div className="mb-2 text-sm text-gray-500">
+                <div className="mb-2 text-sm text-slate-500">
                   {new Date(order.created_at).toLocaleString('vi-VN')}
                 </div>
 
-                <div className="font-semibold">SĐT: {order.phone}</div>
+                <div className="font-semibold text-slate-700">
+                  Số điện thoại: {order.phone}
+                </div>
 
-                <div className="mt-1 text-sm">
+                <div className="mt-1 text-sm text-slate-600">
                   Trạng thái:{' '}
                   <span
                     className={
                       order.status === 'done'
-                        ? 'font-medium text-green-600'
-                        : 'font-medium text-orange-500'
+                        ? 'font-semibold text-emerald-600'
+                        : 'font-semibold text-orange-500'
                     }
                   >
                     {order.status === 'done' ? 'Hoàn thành' : 'Đang chờ'}
@@ -594,27 +610,27 @@ export default function AdminPage() {
                 </div>
 
                 {!!order.note && (
-                  <div className="mt-1 text-sm text-gray-600">
+                  <div className="mt-1 text-sm text-slate-600">
                     Ghi chú chung: {order.note}
                   </div>
                 )}
 
                 <div className="mt-3 space-y-1">
                   {(order.items || []).map((item, idx) => (
-                    <div key={idx} className="text-sm">
+                    <div key={idx} className="text-sm text-slate-600">
                       • {item.name || 'Món không tên'} x{item.quantity || 0}
                       {!!item.note && (
-                        <span className="text-gray-500"> ({item.note})</span>
+                        <span className="text-slate-500"> ({item.note})</span>
                       )}
                     </div>
                   ))}
                 </div>
 
-                <div className="mt-3 text-sm text-gray-500">
+                <div className="mt-3 text-sm text-slate-500">
                   Tổng món: {order.total_items}
                 </div>
 
-                <div className="mt-1 text-right font-bold">
+                <div className="mt-1 text-right font-bold text-emerald-700">
                   {order.total_price.toLocaleString('vi-VN')}đ
                 </div>
 
@@ -622,7 +638,7 @@ export default function AdminPage() {
                   {order.status !== 'done' ? (
                     <button
                       onClick={() => markOrderDone(order.id)}
-                      className="rounded-2xl bg-green-600 px-3 py-2 text-xs font-medium text-white"
+                      className="rounded-2xl bg-emerald-500 px-3 py-2 text-xs font-medium text-white"
                     >
                       Hoàn thành
                     </button>
@@ -637,7 +653,7 @@ export default function AdminPage() {
 
                   <button
                     onClick={() => deleteOrder(order.id)}
-                    className="rounded-2xl bg-red-500 px-3 py-2 text-xs font-medium text-white"
+                    className="rounded-2xl bg-rose-500 px-3 py-2 text-xs font-medium text-white"
                   >
                     Xóa đơn
                   </button>
