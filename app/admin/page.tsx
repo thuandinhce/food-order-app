@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import imageCompression from 'browser-image-compression';
 import { supabase } from '../../lib/supabase';
 
 type OrderItem = {
@@ -102,8 +103,23 @@ export default function AdminPage() {
     }
   };
 
+  const compressImage = async (file: File) => {
+    const options = {
+      maxSizeMB: 0.3,
+      maxWidthOrHeight: 1200,
+      useWebWorker: true,
+      initialQuality: 0.75,
+      fileType: 'image/webp',
+    };
+
+    const compressedFile = await imageCompression(file, options);
+    return compressedFile;
+  };
+
   const uploadMenuImage = async (file: File) => {
-    const fileExt = file.name.split('.').pop() || 'jpg';
+    const compressedFile = await compressImage(file);
+
+    const fileExt = 'webp';
     const fileName = `${Date.now()}-${Math.random()
       .toString(36)
       .slice(2)}.${fileExt}`;
@@ -111,8 +127,9 @@ export default function AdminPage() {
 
     const { error: uploadError } = await supabase.storage
       .from('menu-images')
-      .upload(filePath, file, {
+      .upload(filePath, compressedFile, {
         upsert: false,
+        contentType: 'image/webp',
       });
 
     if (uploadError) {
@@ -350,7 +367,7 @@ export default function AdminPage() {
       <div className="mx-auto w-full max-w-md space-y-6">
         <div className="flex items-center justify-between rounded-3xl border border-emerald-100 bg-white/90 p-4 shadow-sm">
           <div>
-            <h1 className="text-xl font-bold text-slate-700">Quản trị TINTUNE</h1>
+            <h1 className="text-xl font-bold text-slate-700">Quản Trị TINTUNE</h1>
             <p className="mt-1 text-sm text-slate-500">
               Quản lý menu và đơn hàng
             </p>
@@ -407,6 +424,9 @@ export default function AdminPage() {
                 onChange={(e) => setNewImageFile(e.target.files?.[0] || null)}
                 className="w-full rounded-2xl border border-emerald-100 bg-emerald-50/40 px-4 py-3 text-sm text-slate-600"
               />
+              <p className="mt-2 text-xs text-slate-500">
+                Ảnh sẽ được nén tự động trước khi tải lên.
+              </p>
             </div>
 
             <button
@@ -483,6 +503,9 @@ export default function AdminPage() {
                           }
                           className="w-full rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm text-slate-600"
                         />
+                        <p className="mt-2 text-xs text-slate-500">
+                          Ảnh mới sẽ được nén tự động trước khi tải lên.
+                        </p>
                       </div>
 
                       <div className="flex gap-2">
