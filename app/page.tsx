@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 type MenuItem = {
@@ -12,6 +12,8 @@ type MenuItem = {
   available: boolean;
   image_url: string | null;
   image_path: string | null;
+  display_order: number;
+  category: string | null;
 };
 
 type CartItem = MenuItem & {
@@ -38,6 +40,8 @@ type Order = {
   status: string;
 };
 
+const ALL_CATEGORY = 'Tất cả';
+
 export default function HomePage() {
   const [menu, setMenu] = useState<MenuItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -45,6 +49,8 @@ export default function HomePage() {
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingMenu, setLoadingMenu] = useState(true);
+
+  const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY);
 
   const [lookupPhone, setLookupPhone] = useState('');
   const [lookupLoading, setLookupLoading] = useState(false);
@@ -75,6 +81,26 @@ export default function HomePage() {
   useEffect(() => {
     fetchMenu();
   }, []);
+
+  const categories = useMemo(() => {
+    const values = Array.from(
+      new Set(
+        menu
+          .map((item) => item.category?.trim())
+          .filter((value): value is string => !!value)
+      )
+    );
+
+    return [ALL_CATEGORY, ...values];
+  }, [menu]);
+
+  const filteredMenu = useMemo(() => {
+    if (selectedCategory === ALL_CATEGORY) {
+      return menu;
+    }
+
+    return menu.filter((item) => item.category === selectedCategory);
+  }, [menu, selectedCategory]);
 
   const addToCart = (item: MenuItem) => {
     setCart((prev) => {
@@ -203,7 +229,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-emerald-50 via-teal-50 to-cyan-50 text-slate-700">
       <div className="mx-auto min-h-screen w-full max-w-md bg-white/80 shadow-[0_10px_40px_rgba(15,118,110,0.10)] backdrop-blur-sm">
-        <header className="sticky top-0 z-10 border-b border-emerald-100 bg-white/90 backdrop-blur">
+        <header className="sticky top-0 z-20 border-b border-emerald-100 bg-white/90 backdrop-blur">
           <div className="px-4 pb-4 pt-5">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -227,6 +253,28 @@ export default function HomePage() {
                 Chat Zalo
               </a>
             </div>
+
+            <div className="mt-4 -mx-4 overflow-x-auto px-4">
+              <div className="flex min-w-max gap-2 pb-1">
+                {categories.map((category) => {
+                  const active = selectedCategory === category;
+
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={
+                        active
+                          ? 'rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm'
+                          : 'rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-slate-600'
+                      }
+                    >
+                      {category}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </header>
 
@@ -234,7 +282,9 @@ export default function HomePage() {
           <div className="rounded-3xl bg-gradient-to-r from-emerald-300 via-teal-300 to-cyan-300 p-[1px] shadow-sm">
             <div className="rounded-3xl bg-white/95 px-4 py-4">
               <p className="text-sm font-semibold text-emerald-700">
-                Hôm nay có gì ngon
+                {selectedCategory === ALL_CATEGORY
+                  ? 'Hôm nay có gì ngon'
+                  : `Danh mục: ${selectedCategory}`}
               </p>
               <p className="mt-1 text-sm text-slate-500">
                 Chọn món, thêm ghi chú riêng, rồi đặt hàng thật nhanh.
@@ -248,14 +298,14 @@ export default function HomePage() {
             </div>
           )}
 
-          {!loadingMenu && menu.length === 0 && (
+          {!loadingMenu && filteredMenu.length === 0 && (
             <div className="rounded-3xl border border-emerald-100 bg-white p-4 shadow-sm">
-              Hôm nay chưa có món nào.
+              Không có món nào trong danh mục này.
             </div>
           )}
 
           {!loadingMenu &&
-            menu.map((item) => {
+            filteredMenu.map((item) => {
               const cartItem = getItem(item.id);
 
               return (
@@ -295,15 +345,22 @@ export default function HomePage() {
                             </p>
                           )}
 
-                          <p className="mt-2 text-[18px] font-bold text-slate-700">
-                            {item.price.toLocaleString('vi-VN')}đ
-                          </p>
+                          <div className="mt-2 flex items-center gap-2">
+                            <p className="text-[18px] font-bold text-slate-700">
+                              {item.price.toLocaleString('vi-VN')}đ
+                            </p>
+                            {item.category && (
+                              <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
+                                {item.category}
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         {!cartItem ? (
                           <button
                             onClick={() => addToCart(item)}
-                            className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-3xl font-light leading-none text-white shadow-sm"
+                            className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-3xl font-light leading-none text-white shadow-sm"
                             aria-label={`Thêm ${item.name}`}
                           >
                             +

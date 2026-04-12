@@ -34,9 +34,19 @@ type MenuItem = {
   image_url: string | null;
   image_path: string | null;
   display_order: number;
+  category: string | null;
 };
 
 const ADMIN_PASSWORD = '090819';
+
+const CATEGORY_OPTIONS = [
+  'Món chính',
+  'Ăn vặt',
+  'Nước uống',
+  'Combo',
+  'Món chay',
+  'Tráng miệng',
+];
 
 export default function AdminPage() {
   const [authorized, setAuthorized] = useState(false);
@@ -48,12 +58,14 @@ export default function AdminPage() {
   const [newName, setNewName] = useState('');
   const [newPrice, setNewPrice] = useState('');
   const [newDescription, setNewDescription] = useState('');
+  const [newCategory, setNewCategory] = useState('Món chính');
   const [newImageFile, setNewImageFile] = useState<File | null>(null);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editPrice, setEditPrice] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [editCategory, setEditCategory] = useState('Món chính');
   const [editImageFile, setEditImageFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -192,6 +204,7 @@ export default function AdminPage() {
           name: newName.trim(),
           price: priceNumber,
           description: newDescription.trim() || null,
+          category: newCategory,
           available: true,
           image_url: imageUrl,
           image_path: imagePath,
@@ -207,6 +220,7 @@ export default function AdminPage() {
       setNewName('');
       setNewPrice('');
       setNewDescription('');
+      setNewCategory('Món chính');
       setNewImageFile(null);
       fetchAll();
     } catch (err) {
@@ -221,6 +235,7 @@ export default function AdminPage() {
     setEditName(item.name);
     setEditPrice(String(item.price));
     setEditDescription(item.description || '');
+    setEditCategory(item.category || 'Món chính');
     setEditImageFile(null);
   };
 
@@ -229,6 +244,7 @@ export default function AdminPage() {
     setEditName('');
     setEditPrice('');
     setEditDescription('');
+    setEditCategory('Món chính');
     setEditImageFile(null);
   };
 
@@ -263,6 +279,7 @@ export default function AdminPage() {
           name: editName.trim(),
           price: priceNumber,
           description: editDescription.trim() || null,
+          category: editCategory,
           image_url: imageUrl,
           image_path: imagePath,
         })
@@ -450,6 +467,18 @@ export default function AdminPage() {
               className="w-full rounded-2xl border border-emerald-100 bg-emerald-50/40 px-4 py-3 text-sm text-slate-600 outline-none"
             />
 
+            <select
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              className="w-full rounded-2xl border border-emerald-100 bg-emerald-50/40 px-4 py-3 text-sm text-slate-600 outline-none"
+            >
+              {CATEGORY_OPTIONS.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+
             <textarea
               value={newDescription}
               onChange={(e) => setNewDescription(e.target.value)}
@@ -519,6 +548,18 @@ export default function AdminPage() {
                         inputMode="numeric"
                         className="w-full rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm text-slate-600 outline-none"
                       />
+
+                      <select
+                        value={editCategory}
+                        onChange={(e) => setEditCategory(e.target.value)}
+                        className="w-full rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm text-slate-600 outline-none"
+                      >
+                        {CATEGORY_OPTIONS.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </select>
 
                       <textarea
                         value={editDescription}
@@ -606,9 +647,16 @@ export default function AdminPage() {
                               </p>
                             )}
 
-                            <p className="mt-2 text-[18px] font-bold text-slate-700">
-                              {item.price.toLocaleString('vi-VN')}đ
-                            </p>
+                            <div className="mt-2 flex items-center gap-2">
+                              <p className="text-[18px] font-bold text-slate-700">
+                                {item.price.toLocaleString('vi-VN')}đ
+                              </p>
+                              {item.category && (
+                                <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
+                                  {item.category}
+                                </span>
+                              )}
+                            </div>
 
                             <div className="mt-2 text-xs text-slate-500">
                               Thứ tự: {item.display_order}{' '}
@@ -630,7 +678,6 @@ export default function AdminPage() {
                               onClick={() => moveMenuItem(item, 'up')}
                               disabled={isFirst}
                               className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-semibold text-emerald-700 shadow-sm disabled:opacity-40"
-                              aria-label={`Đưa ${item.name} lên trên`}
                             >
                               ↑
                             </button>
@@ -639,7 +686,6 @@ export default function AdminPage() {
                               onClick={() => moveMenuItem(item, 'down')}
                               disabled={isLast}
                               className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-semibold text-emerald-700 shadow-sm disabled:opacity-40"
-                              aria-label={`Đưa ${item.name} xuống dưới`}
                             >
                               ↓
                             </button>
