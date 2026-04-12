@@ -33,6 +33,7 @@ type MenuItem = {
   created_at: string;
   image_url: string | null;
   image_path: string | null;
+  display_order: number;
 };
 
 const ADMIN_PASSWORD = '090819';
@@ -84,7 +85,7 @@ export default function AdminPage() {
         supabase
           .from('menu_items')
           .select('*')
-          .order('created_at', { ascending: true }),
+          .order('display_order', { ascending: true }),
       ]);
 
       if (ordersRes.error) {
@@ -181,6 +182,11 @@ export default function AdminPage() {
         imagePath = uploadResult.imagePath;
       }
 
+      const maxOrder = Math.max(
+        0,
+        ...menuItems.map((item) => item.display_order || 0)
+      );
+
       const { error } = await supabase.from('menu_items').insert([
         {
           name: newName.trim(),
@@ -189,6 +195,7 @@ export default function AdminPage() {
           available: true,
           image_url: imageUrl,
           image_path: imagePath,
+          display_order: maxOrder + 1,
         },
       ]);
 
@@ -277,6 +284,43 @@ export default function AdminPage() {
         err instanceof Error ? err.message : 'Tải ảnh lên thất bại.';
       alert(`Lỗi tải ảnh: ${message}`);
     }
+  };
+
+  const moveMenuItem = async (item: MenuItem, direction: 'up' | 'down') => {
+    const sorted = [...menuItems].sort(
+      (a, b) => (a.display_order || 0) - (b.display_order || 0)
+    );
+
+    const currentIndex = sorted.findIndex((menu) => menu.id === item.id);
+    if (currentIndex === -1) return;
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= sorted.length) return;
+
+    const currentItem = sorted[currentIndex];
+    const targetItem = sorted[targetIndex];
+
+    const { error: firstError } = await supabase
+      .from('menu_items')
+      .update({ display_order: targetItem.display_order })
+      .eq('id', currentItem.id);
+
+    if (firstError) {
+      alert(`Lỗi đổi thứ tự món: ${firstError.message}`);
+      return;
+    }
+
+    const { error: secondError } = await supabase
+      .from('menu_items')
+      .update({ display_order: currentItem.display_order })
+      .eq('id', targetItem.id);
+
+    if (secondError) {
+      alert(`Lỗi đổi thứ tự món: ${secondError.message}`);
+      return;
+    }
+
+    fetchAll();
   };
 
   const toggleAvailable = async (item: MenuItem) => {
@@ -440,19 +484,24 @@ export default function AdminPage() {
 
         <section className="rounded-[28px] border border-emerald-100 bg-white p-4 shadow-sm">
           <h2 className="text-lg font-bold text-slate-700">Quản lý menu</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Dùng nút ↑ ↓ để thay đổi thứ tự hiển thị món.
+          </p>
 
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 space-y-3">
             {menuItems.length === 0 && (
               <div className="text-sm text-slate-500">Chưa có món nào.</div>
             )}
 
-            {menuItems.map((item) => {
+            {menuItems.map((item, index) => {
               const isEditing = editingId === item.id;
+              const isFirst = index === 0;
+              const isLast = index === menuItems.length - 1;
 
               return (
                 <div
                   key={item.id}
-                  className="rounded-3xl border border-emerald-100 bg-emerald-50/30 p-3"
+                  className="rounded-3xl border border-emerald-100 bg-emerald-50/30 px-3 py-3"
                 >
                   {isEditing ? (
                     <div className="space-y-3">
@@ -480,7 +529,7 @@ export default function AdminPage() {
                       />
 
                       {item.image_url && (
-                        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl">
+                        <div className="relative h-28 w-28 overflow-hidden rounded-2xl">
                           <Image
                             src={item.image_url}
                             alt={item.name}
@@ -525,9 +574,9 @@ export default function AdminPage() {
                       </div>
                     </div>
                   ) : (
-                    <>
-                      {item.image_url ? (
-                        <div className="relative mb-3 aspect-[4/3] w-full overflow-hidden rounded-2xl">
+                    <div className="flex items-start gap-3">
+                      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-emerald-50">
+                        {item.image_url ? (
                           <Image
                             src={item.image_url}
                             alt={item.name}
@@ -535,62 +584,92 @@ export default function AdminPage() {
                             className="object-cover"
                             unoptimized
                           />
-                        </div>
-                      ) : (
-                        <div className="mb-3 flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 via-teal-100 to-cyan-100">
-                          <span className="text-sm font-medium text-emerald-700">
-                            Chưa có ảnh món
-                          </span>
-                        </div>
-                      )}
-
-                      <div>
-                        <div className="font-bold text-slate-700">{item.name}</div>
-                        <div className="text-sm font-semibold text-emerald-700">
-                          {item.price.toLocaleString('vi-VN')}đ
-                        </div>
-                        {item.description && (
-                          <div className="mt-1 text-sm text-slate-500">
-                            {item.description}
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-100 via-teal-100 to-cyan-100">
+                            <span className="px-2 text-center text-xs font-medium text-emerald-700">
+                              Chưa có ảnh
+                            </span>
                           </div>
                         )}
-                        <div className="mt-2 text-xs text-slate-500">
-                          Trạng thái:{' '}
-                          <span
-                            className={
-                              item.available
-                                ? 'font-semibold text-emerald-600'
-                                : 'font-semibold text-red-500'
-                            }
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="line-clamp-2 text-[17px] font-semibold leading-6 text-slate-700">
+                              {item.name}
+                            </h3>
+
+                            {item.description && (
+                              <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-500">
+                                {item.description}
+                              </p>
+                            )}
+
+                            <p className="mt-2 text-[18px] font-bold text-slate-700">
+                              {item.price.toLocaleString('vi-VN')}đ
+                            </p>
+
+                            <div className="mt-2 text-xs text-slate-500">
+                              Thứ tự: {item.display_order}{' '}
+                              <span className="mx-1">•</span>
+                              <span
+                                className={
+                                  item.available
+                                    ? 'font-semibold text-emerald-600'
+                                    : 'font-semibold text-red-500'
+                                }
+                              >
+                                {item.available ? 'Đang bán' : 'Đang ẩn'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex shrink-0 flex-col gap-2">
+                            <button
+                              onClick={() => moveMenuItem(item, 'up')}
+                              disabled={isFirst}
+                              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-semibold text-emerald-700 shadow-sm disabled:opacity-40"
+                              aria-label={`Đưa ${item.name} lên trên`}
+                            >
+                              ↑
+                            </button>
+
+                            <button
+                              onClick={() => moveMenuItem(item, 'down')}
+                              disabled={isLast}
+                              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-semibold text-emerald-700 shadow-sm disabled:opacity-40"
+                              aria-label={`Đưa ${item.name} xuống dưới`}
+                            >
+                              ↓
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button
+                            onClick={() => startEditMenuItem(item)}
+                            className="rounded-2xl bg-cyan-500 px-3 py-2 text-xs font-medium text-white"
                           >
-                            {item.available ? 'Đang bán' : 'Đang ẩn'}
-                          </span>
+                            Sửa món
+                          </button>
+
+                          <button
+                            onClick={() => toggleAvailable(item)}
+                            className="rounded-2xl bg-emerald-500 px-3 py-2 text-xs font-medium text-white"
+                          >
+                            {item.available ? 'Ẩn món' : 'Hiện món'}
+                          </button>
+
+                          <button
+                            onClick={() => deleteMenuItem(item)}
+                            className="rounded-2xl bg-rose-500 px-3 py-2 text-xs font-medium text-white"
+                          >
+                            Xóa món
+                          </button>
                         </div>
                       </div>
-
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button
-                          onClick={() => startEditMenuItem(item)}
-                          className="rounded-2xl bg-cyan-500 px-3 py-2 text-xs font-medium text-white"
-                        >
-                          Sửa món
-                        </button>
-
-                        <button
-                          onClick={() => toggleAvailable(item)}
-                          className="rounded-2xl bg-emerald-500 px-3 py-2 text-xs font-medium text-white"
-                        >
-                          {item.available ? 'Ẩn món' : 'Hiện món'}
-                        </button>
-
-                        <button
-                          onClick={() => deleteMenuItem(item)}
-                          className="rounded-2xl bg-rose-500 px-3 py-2 text-xs font-medium text-white"
-                        >
-                          Xóa món
-                        </button>
-                      </div>
-                    </>
+                    </div>
                   )}
                 </div>
               );

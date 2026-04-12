@@ -59,7 +59,7 @@ export default function HomePage() {
         .from('menu_items')
         .select('*')
         .eq('available', true)
-        .order('created_at', { ascending: true });
+        .order('display_order', { ascending: true });
 
       if (error) {
         alert(`Lỗi tải menu: ${error.message}`);
@@ -219,7 +219,7 @@ export default function HomePage() {
               </div>
 
               <a
-                href="https://zalo.me/0915025463"
+                href="https://zalo.me/0900000000"
                 target="_blank"
                 rel="noreferrer"
                 className="rounded-2xl border border-emerald-200 bg-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-200"
@@ -230,7 +230,7 @@ export default function HomePage() {
           </div>
         </header>
 
-        <section className="space-y-4 px-4 py-4">
+        <section className="space-y-3 px-4 py-4">
           <div className="rounded-3xl bg-gradient-to-r from-emerald-300 via-teal-300 to-cyan-300 p-[1px] shadow-sm">
             <div className="rounded-3xl bg-white/95 px-4 py-4">
               <p className="text-sm font-semibold text-emerald-700">
@@ -261,88 +261,88 @@ export default function HomePage() {
               return (
                 <article
                   key={item.id}
-                  className="overflow-hidden rounded-[28px] border border-emerald-100 bg-white shadow-[0_10px_30px_rgba(16,185,129,0.08)]"
+                  className="rounded-3xl border border-emerald-100 bg-white px-3 py-3 shadow-sm"
                 >
-                  {item.image_url ? (
-                    <div className="relative aspect-[4/3] w-full bg-emerald-50">
-                      <Image
-                        src={item.image_url}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex aspect-[4/3] w-full items-center justify-center bg-gradient-to-br from-emerald-100 via-teal-100 to-cyan-100">
-                      <span className="text-sm font-medium text-emerald-700">
-                        Chưa có ảnh món
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h2 className="text-lg font-bold text-slate-700">
-                          {item.name}
-                        </h2>
-
-                        {item.description && (
-                          <p className="mt-1 text-sm leading-6 text-slate-500">
-                            {item.description}
-                          </p>
-                        )}
-                      </div>
-
-                      <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-                        Có sẵn
-                      </span>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between">
-                      <p className="text-lg font-bold text-emerald-700">
-                        {item.price.toLocaleString('vi-VN')}đ
-                      </p>
-
-                      {!cartItem ? (
-                        <button
-                          onClick={() => addToCart(item)}
-                          className="rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
-                        >
-                          Thêm món
-                        </button>
+                  <div className="flex items-start gap-3">
+                    <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-emerald-50">
+                      {item.image_url ? (
+                        <Image
+                          src={item.image_url}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
                       ) : (
-                        <div className="flex items-center gap-3 rounded-2xl bg-emerald-50 px-3 py-2">
-                          <button
-                            onClick={() => decreaseFromCart(item.id)}
-                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-lg font-bold text-emerald-700 shadow-sm"
-                          >
-                            -
-                          </button>
-
-                          <span className="min-w-5 text-center font-semibold text-slate-600">
-                            {cartItem.quantity}
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-100 via-teal-100 to-cyan-100">
+                          <span className="px-2 text-center text-xs font-medium text-emerald-700">
+                            Chưa có ảnh
                           </span>
-
-                          <button
-                            onClick={() => addToCart(item)}
-                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500 text-lg font-bold text-white shadow-sm"
-                          >
-                            +
-                          </button>
                         </div>
                       )}
                     </div>
 
-                    {cartItem && (
-                      <textarea
-                        value={cartItem.note}
-                        onChange={(e) => updateItemNote(item.id, e.target.value)}
-                        placeholder="Ghi chú riêng cho món này..."
-                        className="mt-3 w-full rounded-2xl border border-emerald-100 bg-emerald-50/50 px-3 py-3 text-sm text-slate-600 outline-none placeholder:text-slate-400 focus:border-emerald-300"
-                      />
-                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <h2 className="line-clamp-2 text-[17px] font-semibold leading-6 text-slate-700">
+                            {item.name}
+                          </h2>
+
+                          {item.description && (
+                            <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-500">
+                              {item.description}
+                            </p>
+                          )}
+
+                          <p className="mt-2 text-[18px] font-bold text-slate-700">
+                            {item.price.toLocaleString('vi-VN')}đ
+                          </p>
+                        </div>
+
+                        {!cartItem ? (
+                          <button
+                            onClick={() => addToCart(item)}
+                            className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-3xl font-light leading-none text-white shadow-sm"
+                            aria-label={`Thêm ${item.name}`}
+                          >
+                            +
+                          </button>
+                        ) : (
+                          <div className="mt-1 flex shrink-0 flex-col items-center gap-2 rounded-2xl bg-emerald-50 px-2 py-2">
+                            <button
+                              onClick={() => addToCart(item)}
+                              className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-2xl font-light leading-none text-white"
+                              aria-label={`Tăng số lượng ${item.name}`}
+                            >
+                              +
+                            </button>
+
+                            <span className="text-sm font-semibold text-slate-700">
+                              {cartItem.quantity}
+                            </span>
+
+                            <button
+                              onClick={() => decreaseFromCart(item.id)}
+                              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-2xl font-light leading-none text-emerald-700 shadow-sm"
+                              aria-label={`Giảm số lượng ${item.name}`}
+                            >
+                              -
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {cartItem && (
+                        <textarea
+                          value={cartItem.note}
+                          onChange={(e) => updateItemNote(item.id, e.target.value)}
+                          placeholder="Ghi chú riêng cho món này..."
+                          className="mt-3 w-full rounded-2xl border border-emerald-100 bg-emerald-50/50 px-3 py-3 text-sm text-slate-600 outline-none placeholder:text-slate-400 focus:border-emerald-300"
+                          rows={2}
+                        />
+                      )}
+                    </div>
                   </div>
                 </article>
               );
