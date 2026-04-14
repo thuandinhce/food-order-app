@@ -40,7 +40,7 @@ type MenuItem = {
 const ADMIN_PASSWORD = '090819';
 
 const CATEGORY_OPTIONS = [
-  'Món chính',
+  'Trái cây',
   'Ăn vặt',
   'Nước uống',
   'Combo',
