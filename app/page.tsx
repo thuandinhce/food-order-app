@@ -357,37 +357,39 @@ export default function HomePage() {
                           </div>
                         </div>
 
-                        {!cartItem ? (
-                          <button
-                            onClick={() => addToCart(item)}
-                            className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-3xl font-light leading-none text-white shadow-sm"
-                            aria-label={`Thêm ${item.name}`}
-                          >
-                            +
-                          </button>
-                        ) : (
-                          <div className="mt-1 flex shrink-0 flex-col items-center gap-2 rounded-2xl bg-emerald-50 px-2 py-2">
+                        <div className="mt-1 flex w-9 shrink-0 flex-col items-center gap-2">
+                          {!cartItem ? (
                             <button
                               onClick={() => addToCart(item)}
-                              className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-2xl font-light leading-none text-white"
-                              aria-label={`Tăng số lượng ${item.name}`}
+                              className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-3xl font-light leading-none text-white shadow-sm"
+                              aria-label={`Thêm ${item.name}`}
                             >
                               +
                             </button>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => addToCart(item)}
+                                className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-2xl font-light leading-none text-white shadow-sm"
+                                aria-label={`Tăng số lượng ${item.name}`}
+                              >
+                                +
+                              </button>
 
-                            <span className="text-sm font-semibold text-slate-700">
-                              {cartItem.quantity}
-                            </span>
+                              <span className="flex h-5 w-9 items-center justify-center text-sm font-semibold text-slate-700">
+                                {cartItem.quantity}
+                              </span>
 
-                            <button
-                              onClick={() => decreaseFromCart(item.id)}
-                              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-2xl font-light leading-none text-emerald-700 shadow-sm"
-                              aria-label={`Giảm số lượng ${item.name}`}
-                            >
-                              -
-                            </button>
-                          </div>
-                        )}
+                              <button
+                                onClick={() => decreaseFromCart(item.id)}
+                                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-2xl font-light leading-none text-emerald-700 shadow-sm"
+                                aria-label={`Giảm số lượng ${item.name}`}
+                              >
+                                -
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
 
                       {cartItem && (
