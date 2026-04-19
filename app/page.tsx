@@ -47,6 +47,7 @@ export default function HomePage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [phone, setPhone] = useState('');
   const [note, setNote] = useState('');
+  const [showCheckout, setShowCheckout] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingMenu, setLoadingMenu] = useState(true);
 
@@ -148,10 +149,11 @@ export default function HomePage() {
 
   const isValidPhone = /^0\d{9,10}$/.test(phone);
   const isValidLookupPhone = /^0\d{9,10}$/.test(lookupPhone);
-  const canOrder = isValidPhone && cart.length > 0 && !isSubmitting;
+  const canOpenCheckout = cart.length > 0 && !isSubmitting;
+  const canConfirmOrder = isValidPhone && cart.length > 0 && !isSubmitting;
 
   const handleOrder = async () => {
-    if (!canOrder) return;
+    if (!canConfirmOrder) return;
 
     try {
       setIsSubmitting(true);
@@ -176,6 +178,7 @@ export default function HomePage() {
       setCart([]);
       setPhone('');
       setNote('');
+      setShowCheckout(false);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Có lỗi không xác định xảy ra.';
@@ -229,7 +232,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-emerald-50 via-teal-50 to-cyan-50 text-slate-700">
       <div className="mx-auto min-h-screen w-full max-w-md bg-white/80 shadow-[0_10px_40px_rgba(15,118,110,0.10)] backdrop-blur-sm">
-        <header className="sticky top-0 z-20 border-b border-emerald-100 bg-white/90 backdrop-blur">
+        <header className="sticky top-0 z-30 border-b border-emerald-100 bg-white/95 backdrop-blur">
           <div className="px-4 pb-4 pt-5">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -275,6 +278,7 @@ export default function HomePage() {
                 })}
               </div>
             </div>
+
           </div>
         </header>
 
@@ -408,47 +412,7 @@ export default function HomePage() {
             })}
         </section>
 
-        <section className="px-4 pb-6">
-          <div className="rounded-[28px] border border-emerald-100 bg-white p-4 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-700">
-              Thông tin đặt hàng
-            </h2>
-
-            <div className="mt-4 space-y-4">
-              <div>
-                <label className="text-sm font-semibold text-slate-600">
-                  Số điện thoại
-                </label>
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="0901234567"
-                  className="mt-2 w-full rounded-2xl border border-emerald-100 bg-emerald-50/40 px-4 py-3 text-sm text-slate-600 outline-none placeholder:text-slate-400 focus:border-emerald-300"
-                />
-                {phone.length > 0 && !isValidPhone && (
-                  <p className="mt-2 text-xs text-red-500">
-                    Vui lòng nhập số điện thoại hợp lệ.
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="text-sm font-semibold text-slate-600">
-                  Ghi chú chung
-                </label>
-                <textarea
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="Ghi chú chung..."
-                  className="mt-2 w-full rounded-2xl border border-emerald-100 bg-emerald-50/40 px-4 py-3 text-sm text-slate-600 outline-none placeholder:text-slate-400 focus:border-emerald-300"
-                  rows={4}
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="px-4 pb-40">
+        <section className="px-4 pb-56">
           <div className="rounded-[28px] border border-emerald-100 bg-white p-4 shadow-sm">
             <h2 className="text-lg font-bold text-slate-700">
               Tra cứu đơn hàng
@@ -531,25 +495,99 @@ export default function HomePage() {
           </div>
         </section>
 
-        <div className="fixed bottom-0 left-1/2 z-20 w-full max-w-md -translate-x-1/2 border-t border-emerald-100 bg-white/90 px-4 py-4 backdrop-blur">
-          <div className="flex items-center justify-between rounded-[24px] bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-4 text-white shadow-[0_10px_30px_rgba(16,185,129,0.25)]">
-            <div>
-              <p className="text-sm text-white/85">{totalItems} món</p>
-              <p className="text-lg font-bold">
-                {totalPrice.toLocaleString('vi-VN')}đ
-              </p>
-            </div>
+      </div>
 
-            <button
-              onClick={handleOrder}
-              disabled={!canOrder}
-              className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-emerald-700 disabled:opacity-50"
-            >
-              {isSubmitting ? 'Đang gửi...' : 'Đặt hàng'}
-            </button>
+      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md border-t border-emerald-100 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-10px_30px_rgba(15,118,110,0.10)] backdrop-blur">
+        <div className="flex items-center justify-between rounded-[24px] bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3 text-white shadow-[0_10px_30px_rgba(16,185,129,0.25)]">
+          <div className="min-w-0">
+            <p className="text-sm text-white/85">{totalItems} món</p>
+            <p className="truncate text-lg font-bold">
+              {totalPrice.toLocaleString('vi-VN')}đ
+            </p>
           </div>
+
+          <button
+            onClick={() => setShowCheckout(true)}
+            disabled={!canOpenCheckout}
+            className="shrink-0 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-emerald-700 disabled:opacity-50"
+          >
+            Đặt hàng
+          </button>
         </div>
       </div>
+
+      {showCheckout && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/35 px-4">
+          <div className="w-full max-w-md rounded-t-[28px] bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 shadow-[0_-16px_40px_rgba(15,23,42,0.20)]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-700">
+                  Xác nhận đặt hàng
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {totalItems} món • {totalPrice.toLocaleString('vi-VN')}đ
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowCheckout(false)}
+                className="rounded-2xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600"
+              >
+                Đóng
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <div>
+                <label
+                  className="text-sm font-semibold text-slate-600"
+                  htmlFor="checkout-phone"
+                >
+                  Số điện thoại
+                </label>
+                <input
+                  id="checkout-phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="0901234567"
+                  inputMode="tel"
+                  className="mt-2 h-12 w-full rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 text-sm text-slate-600 outline-none placeholder:text-slate-400 focus:border-emerald-300"
+                />
+                {phone.length > 0 && !isValidPhone && (
+                  <p className="mt-2 text-xs text-red-500">
+                    Vui lòng nhập số điện thoại hợp lệ.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  className="text-sm font-semibold text-slate-600"
+                  htmlFor="checkout-note"
+                >
+                  Ghi chú chung
+                </label>
+                <textarea
+                  id="checkout-note"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Ghi chú chung..."
+                  className="mt-2 w-full rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-sm text-slate-600 outline-none placeholder:text-slate-400 focus:border-emerald-300"
+                  rows={3}
+                />
+              </div>
+
+              <button
+                onClick={handleOrder}
+                disabled={!canConfirmOrder}
+                className="w-full rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3 text-sm font-semibold text-white shadow-sm disabled:opacity-50"
+              >
+                {isSubmitting ? 'Đang gửi...' : 'Xác nhận đặt hàng'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
